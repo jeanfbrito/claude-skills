@@ -20,6 +20,8 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+COMMAND_NAME_RE = re.compile(r"<command-name>/([a-z0-9_-]+)</command-name>")
+
 MAX_FILE_BYTES = 8 * 1024 * 1024
 MAX_MSG_CHARS = 1500
 MAX_TOOL_CHARS = 500
@@ -287,8 +289,12 @@ def parse_claude_session(path: Path, skill_names, include_subagents: bool):
                     has_user_text = True
                     entries.append(("user", truncate(text, MAX_MSG_CHARS)))
                     stripped = text.lstrip()
+                    # Slash commands are recorded as
+                    # `<command-message>x</command-message>\n<command-name>/x</command-name>`,
+                    # so the text never starts with `/x`; read the tag as well.
+                    tagged = COMMAND_NAME_RE.search(text)
                     for name in skill_names:
-                        if stripped.startswith(f"/{name}"):
+                        if stripped.startswith(f"/{name}") or (tagged and tagged.group(1) == name):
                             skills_invoked.add(name)
                 elif role == "assistant":
                     entries.append(("assistant", truncate(text, MAX_MSG_CHARS)))
