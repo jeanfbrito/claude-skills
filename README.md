@@ -11,6 +11,7 @@ Personal collection of [Claude Code](https://docs.claude.com/en/docs/claude-code
 - **postmortem** — Write a post-mortem after a challenging task: full timeline including failed attempts, root causes, durable lesson extraction into AGENTS.md/memory/mastermind, and draft-first distribution (Confluence write-up, team-channel summary, optional blog handoff). Triggered by `/postmortem`, "write a post-mortem", "document what we learned". Loads the shared tone rules from `shared/tone.md`.
 - **weekly-digest** — Draft a short weekly work digest translated from commit/ticket language into impact language, from real sources only (ledger, merged PRs, git history, optional Jira). Triggered by `/weekly-digest`, "weekly digest", "draft my weekly update", "what did I ship this week", "status update for the team". Draft-first, never posts without approval. Loads the shared tone rules from `shared/tone.md`; window state lives in a gitignored `local-config.yml` created on first run.
 - **proposal** — Draft a one-page technical initiative proposal backed by real evidence mined from the project (known issues, git history, ledger, CI patterns). Triggered by `/proposal`, "draft a proposal", "propose an initiative", "write an improvement proposal", "make the case for X". Draft-first, never files or posts without approval. Loads the shared tone rules from `shared/tone.md`. Intended cadence: roughly quarterly.
+- **update-skill** — Create or update a skill in this repo (`~/Github/agent-skills`), keeping SKILL.md frontmatter, README wiring, and symlink install in sync. Triggered by `/update-skill`, "create a skill", "new skill", "update the X skill", "fix the description of skill Y", "add a skill for Z".
 
 Shared references live in `shared/` — currently `tone.md`, the tone/framing rules for any outward-facing text (post-mortems, PR descriptions, channel posts, replies to bug reports). Skills reference it by absolute path so it works through the symlink install.
 
@@ -32,6 +33,7 @@ ln -s ~/Github/agent-skills/grok-build ~/.claude/skills/grok-build
 ln -s ~/Github/agent-skills/postmortem ~/.claude/skills/postmortem
 ln -s ~/Github/agent-skills/weekly-digest ~/.claude/skills/weekly-digest
 ln -s ~/Github/agent-skills/proposal ~/.claude/skills/proposal
+ln -s ~/Github/agent-skills/update-skill ~/.claude/skills/update-skill
 ln -s ~/Github/agent-skills/commands/ticket.md ~/.claude/commands/ticket.md
 ```
 
