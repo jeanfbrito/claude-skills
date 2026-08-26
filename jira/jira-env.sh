@@ -14,7 +14,12 @@
 #
 # If none resolve, prints a hint to run setup.sh and exits the source quietly.
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Works when sourced from bash OR zsh (Claude Code's shell): BASH_SOURCE is
+# empty in zsh, which used to resolve SCRIPT_DIR to "." and print a bogus
+# "./setup.sh" hint.
+_JIRA_ENV_SRC="${BASH_SOURCE[0]:-${(%):-%x}}"
+[[ -z "$_JIRA_ENV_SRC" || "$_JIRA_ENV_SRC" == "-"* ]] && _JIRA_ENV_SRC="$HOME/.claude/skills/jira/jira-env.sh"
+SCRIPT_DIR="$(cd "$(dirname "$_JIRA_ENV_SRC")" && pwd)"
 LOCAL_CONFIG="$SCRIPT_DIR/local-config.yml"
 
 read_local_config() {
@@ -38,8 +43,8 @@ if [[ -z "$KEYCHAIN_ACCOUNT" ]]; then
 fi
 
 if [[ -z "$KEYCHAIN_ACCOUNT" ]]; then
-  echo "WARN: jira skill: no Atlassian account configured." >&2
-  echo "      Run: $SCRIPT_DIR/setup.sh" >&2
+  echo "WARN: jira skill: $LOCAL_CONFIG is missing (no primary project / issue types cached)." >&2
+  echo "      Run once: $SCRIPT_DIR/setup.sh  — until then the skill re-derives project defaults every session." >&2
   return 0 2>/dev/null || exit 0
 fi
 
@@ -47,6 +52,11 @@ export JIRA_API_TOKEN="$(security find-generic-password -s "$KEYCHAIN_SERVICE" -
 export ATLASSIAN_EMAIL="$KEYCHAIN_ACCOUNT"
 
 if [[ -z "$JIRA_API_TOKEN" ]]; then
-  echo "WARN: could not load JIRA_API_TOKEN from Keychain (service=$KEYCHAIN_SERVICE, account=$KEYCHAIN_ACCOUNT)" >&2
-  echo "      Run: $SCRIPT_DIR/setup.sh" >&2
+  # jira-cli also authenticates through ~/.netrc; only warn when neither source works.
+  if grep -qs "atlassian" "$HOME/.netrc" 2>/dev/null; then
+    unset JIRA_API_TOKEN
+  else
+    echo "WARN: could not load JIRA_API_TOKEN from Keychain (service=$KEYCHAIN_SERVICE, account=$KEYCHAIN_ACCOUNT)" >&2
+    echo "      Run: $SCRIPT_DIR/setup.sh" >&2
+  fi
 fi

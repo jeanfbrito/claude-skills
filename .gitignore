@@ -1,3 +1,5 @@
 weekly-digest/local-config.yml
 weekly-digest/local-config.yml.bak.*
 __pycache__/
+jira/local-config.yml
+jira/local-config.yml.bak.*
