@@ -72,6 +72,12 @@ and rerun `setup.sh` (details:
   user says so); never assume otherwise.
 - `workflow_statuses` — pinned status names so you don't have to
   rediscover the workflow chain every session.
+- `defaults.priority_projects` — comma-separated project keys whose
+  tickets are customer-facing escalations. **They always rank above
+  everything else** when answering "what's on my plate" / "what should I
+  do first", regardless of the Jira priority field: list them in their own
+  block at the top, then the rest by priority. `jira-mine` already does
+  this split. Never bury one of these under an internal Highest ticket.
 
 Full issue-type table, status-chain conventions, project discovery, and
 component listing: read when creating/moving tickets and you need the
@@ -86,6 +92,23 @@ scripting):
 ```bash
 jira issue list -q "assignee = currentUser() AND resolution = Unresolved" --plain --no-headers --columns key,summary,status,priority
 ```
+
+**Project scope trap.** `jira issue list` silently ANDs `project = <primary
+project>` into every query unless the `-q` string itself mentions `project`.
+For "what's on my plate" / "my open tickets" / anything cross-project, add
+`project is not EMPTY` (always true) to the JQL so nothing gets hidden —
+support escalations assigned to the user (e.g. SUP tickets) otherwise never
+show up. Sorting: use `--order-by <field>` (`--reverse` flips it); an
+`ORDER BY` inside `-q` returns a 400. The skill ships this as a script:
+
+```bash
+~/.claude/skills/jira/jira-mine                        # all my open issues, all projects, Highest first
+~/.claude/skills/jira/jira-mine "status = 'In Progress'"   # extra JQL AND-ed in
+~/.claude/skills/jira/jira-mine --count
+```
+
+Output comes in two blocks: `defaults.priority_projects` first (always the
+top of the answer), then everything else ordered by priority.
 
 **View** a single issue:
 

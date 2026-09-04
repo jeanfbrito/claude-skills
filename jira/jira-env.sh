@@ -28,6 +28,7 @@ read_local_config() {
     awk -v k="$key" '
       $0 ~ "^[[:space:]]*"k":" {
         sub("^[[:space:]]*"k":[[:space:]]*","",$0)
+        sub(/[[:space:]]+#.*$/,"",$0)
         gsub(/^"|"$/,"",$0)
         gsub(/^[[:space:]]+|[[:space:]]+$/,"",$0)
         print

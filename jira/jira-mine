@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Everything assigned to me, across ALL Jira projects, highest priority first.
+# Tickets from `defaults.priority_projects` (local-config.yml) are printed in
+# their own block FIRST — they are customer escalations and always outrank
+# internal work, whatever the Jira priority field says.
+#
+#   jira-mine                            # unresolved, all projects
+#   jira-mine "status = 'In Progress'"   # extra JQL AND-ed in
+#   jira-mine --count                    # just the number
+#
+# Why: jira-cli silently ANDs `project = <default>` into every `issue list`
+# unless the -q string already mentions `project`. `project is not EMPTY`
+# is always true, so it disables the injection without naming any project.
+set -euo pipefail
+source "$(dirname "$(readlink -f "$0")")/jira-env.sh"
+
+extra=""
+count=0
+for a in "$@"; do
+  case "$a" in
+    --count) count=1 ;;
+    *) extra="$extra AND ($a)" ;;
+  esac
+done
+
+base="project is not EMPTY AND assignee = currentUser() AND resolution = Unresolved AND statusCategory != Done$extra"
+cols="key,priority,status,type,summary,updated"
+prio="$(read_local_config priority_projects | tr -d ' ')"
+
+if [[ $count -eq 1 ]]; then
+  jira issue list -q "$base" --plain --no-headers --columns key 2>/dev/null | wc -l | tr -d ' '
+  exit 0
+fi
+
+if [[ -n "$prio" ]]; then
+  echo "### PRIORITY PROJECTS ($prio) — always first"
+  jira issue list -q "$base AND project in ($prio)" --order-by priority --plain --columns "$cols" 2>/dev/null \
+    || echo "(none)"
+  echo
+  echo "### EVERYTHING ELSE"
+  jira issue list -q "$base AND project not in ($prio)" --order-by priority --plain --columns "$cols"
+else
+  jira issue list -q "$base" --order-by priority --plain --columns "$cols"
+fi
